@@ -22,7 +22,7 @@
     color: #fff;
     transform: translateY(400px);
     visibility: hidden;
-    transition: transform .8s cubic-bezier(.2,.9,.3,1), visibility 0s linear .8s;
+    transition: transform 1.6s cubic-bezier(.45,0,.55,1), visibility 0s linear 1.6s;
   }
   .band.show {
     transform: translateY(0);
@@ -48,7 +48,7 @@
     background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
     transform: skewX(-20deg);
   }
-  .band.show .bar::after { animation: shine 3.2s ease-in-out 1s infinite; }
+  .band.show .bar::after, .band.hiding .bar::after { animation: shine 3.2s ease-in-out 1s infinite; }
   @keyframes shine { 0% { left: -30%; } 60%, 100% { left: 130%; } }
 
   .band.flash .bar { animation: flashbar .45s ease-in-out infinite alternate; }
@@ -71,7 +71,7 @@
     transform: scale(.4) rotate(-12deg);
   }
   .logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .band.show .logo {
+  .band.show .logo, .band.hiding .logo {
     animation: logoIn .8s cubic-bezier(.2,1.4,.4,1) .5s forwards,
                float 3.5s ease-in-out 1.4s infinite;
   }
@@ -129,9 +129,9 @@
   /* ===== Parçaların sırayla gelmesi ===== */
   .brand, .middle, .invite { opacity: 0; transform: translateX(-30px); }
   .invite { transform: translateX(30px); }
-  .band.show .brand  { animation: in .6s ease .8s forwards; }
-  .band.show .middle { animation: in .6s ease 1.0s forwards; }
-  .band.show .invite { animation: in .6s ease 1.2s forwards; }
+  .band.show .brand, .band.hiding .brand  { animation: in .6s ease .8s forwards; }
+  .band.show .middle, .band.hiding .middle { animation: in .6s ease 1.0s forwards; }
+  .band.show .invite, .band.hiding .invite { animation: in .6s ease 1.2s forwards; }
   @keyframes in { to { opacity: 1; transform: translateX(0); } }
 </style>
 <script src="config.js"></script>
@@ -193,7 +193,20 @@
   let msgIdx = 0, autoSig = "", autoTimers = [], rotTimer = null, lastFlash = null;
 
   const visible = () => manual || autoPhase || flashPhase;
-  const render = () => $("band").classList.toggle("show", visible());
+  let hideT;
+  const render = () => {
+    const b = $("band");
+    if (visible()) {
+      clearTimeout(hideT);
+      b.classList.remove("hiding");
+      b.classList.add("show");
+    } else if (b.classList.contains("show")) {
+      b.classList.remove("show");
+      b.classList.add("hiding");          // çıkış animasyonu bitene kadar içerik görünür kalır
+      clearTimeout(hideT);
+      hideT = setTimeout(() => b.classList.remove("hiding"), 1800);
+    }
+  };
 
   function paintStatic() {
     $("brand").innerHTML = "";
