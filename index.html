@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --a: #ff5fa2; --bd: #ff78af; --glow: rgba(255,40,120,.35);
+    --d1: rgba(40,0,20,.92); --d2: rgba(90,0,45,.88); --d3: rgba(150,0,70,.85);
+  }
   html, body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
 
   /* ===== Ana şerit ===== */
@@ -31,12 +35,11 @@
     inset: 0;
     overflow: hidden;
     background:
-      linear-gradient(90deg, rgba(40,0,20,.92) 0%, rgba(90,0,45,.88) 55%, rgba(150,0,70,.85) 100%),
+      linear-gradient(90deg, var(--d1) 0%, var(--d2) 55%, var(--d3) 100%),
       url("banner.png") center / cover no-repeat;
-    border-top: 3px solid rgba(255,120,175,.9);
-    box-shadow: 0 -8px 30px rgba(255,40,120,.35);
+    border-top: 3px solid var(--bd);
+    box-shadow: 0 -8px 30px var(--glow);
   }
-  /* kayan parlama */
   .bar::after {
     content: "";
     position: absolute;
@@ -48,6 +51,9 @@
   .band.show .bar::after { animation: shine 3.2s ease-in-out 1s infinite; }
   @keyframes shine { 0% { left: -30%; } 60%, 100% { left: 130%; } }
 
+  .band.flash .bar { animation: flashbar .45s ease-in-out infinite alternate; }
+  @keyframes flashbar { from { filter: brightness(1); } to { filter: brightness(1.9) saturate(1.5); } }
+
   /* ===== Logo (şeridin üstüne taşar) ===== */
   .logo {
     position: absolute;
@@ -57,21 +63,20 @@
     border-radius: 28px;
     overflow: hidden;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #ff7ab5, #e0005f);
+    background: linear-gradient(135deg, var(--a), var(--d3));
     font-size: 64px; font-weight: 900;
     border: 3px solid rgba(255,255,255,.9);
-    box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 30px rgba(255,60,140,.55);
+    box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 30px var(--glow);
     opacity: 0;
     transform: scale(.4) rotate(-12deg);
   }
+  .logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .band.show .logo {
     animation: logoIn .8s cubic-bezier(.2,1.4,.4,1) .5s forwards,
                float 3.5s ease-in-out 1.4s infinite;
   }
   @keyframes logoIn { to { opacity: 1; transform: scale(1) rotate(0); } }
   @keyframes float { 0%,100% { translate: 0 0; } 50% { translate: 0 -8px; } }
-
-  .logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
   /* ===== Sunucu adı ===== */
   .brand {
@@ -84,7 +89,7 @@
     letter-spacing: 1px;
     text-shadow: 0 3px 14px rgba(0,0,0,.5);
   }
-  .brand span { color: #ff5fa2; }
+  .brand span { color: var(--a); }
 
   /* ===== Orta kısım ===== */
   .middle {
@@ -103,8 +108,8 @@
     animation: pulse 1.8s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(255,95,162,.7); }
-    50%     { box-shadow: 0 0 0 10px rgba(255,95,162,0); }
+    0%,100% { box-shadow: 0 0 0 0 var(--glow); }
+    50%     { box-shadow: 0 0 0 10px transparent; }
   }
   .texts { transition: opacity .4s ease, transform .4s ease; }
   .texts.out { opacity: 0; transform: translateY(10px); }
@@ -129,6 +134,7 @@
   .band.show .invite { animation: in .6s ease 1.2s forwards; }
   @keyframes in { to { opacity: 1; transform: translateX(0); } }
 </style>
+<script src="config.js"></script>
 </head>
 <body>
 
@@ -153,54 +159,141 @@
 </div>
 
 <script>
-  // ====== AYARLAR ======
-  const SUNUCU_ADI_1 = "NO";         // beyaz kısım
-  const SUNUCU_ADI_2 = "LIMITS";     // pembe kısım
-  const DAVET        = "discord.gg/nlroleplay";
-  const ROZET        = "KATIL";      // küçük etiket (YAKINDA, YENİ, AÇIK ...)
+  // Panelden hiçbir şey gelmezse kullanılacak varsayılan değerler
+  const DEF = {
+    show: false,            // elle göster/gizle
+    auto: true,             // belirli aralıkla kendiliğinden çıksın mı
+    waitSec: 120, showSec: 15, rotateSec: 5,
+    brand1: "NO", brand2: "LIMITS",
+    badge: "KATIL",
+    invite: "discord.gg/nlroleplay",
+    theme: "pembe",
+    flash: 0,
+    messages: [
+      { t: "No Limits'e davetlisin!", s: "Yeni insanlarla tanış, eğlenceye katıl." },
+      { t: "Sunucumuz seni bekliyor", s: "Davet linki sağ tarafta, hemen katıl." },
+      { t: "Birlikte eğlenelim", s: "Etkinlikler, sohbet ve çok daha fazlası." }
+    ]
+  };
 
-  const MESAJLAR = [
-    { baslik: "No Limits'e davetlisin!",    alt: "Yeni insanlarla tanış, eğlenceye katıl." },
-    { baslik: "Sunucumuz seni bekliyor",    alt: "Davet linki sağ tarafta, hemen katıl." },
-    { baslik: "Birlikte eğlenelim 🌴",      alt: "Etkinlikler, sohbet ve çok daha fazlası." },
-  ];
+  const THEMES = {
+    pembe:   { a:"#ff5fa2", bd:"#ff78af", glow:"rgba(255,40,120,.35)",  d1:"rgba(40,0,20,.92)",  d2:"rgba(90,0,45,.88)",   d3:"rgba(150,0,70,.85)" },
+    kirmizi: { a:"#ff4d4d", bd:"#ff6b6b", glow:"rgba(255,40,40,.35)",   d1:"rgba(35,0,0,.92)",   d2:"rgba(95,0,10,.88)",   d3:"rgba(160,10,20,.85)" },
+    mor:     { a:"#c77dff", bd:"#d9a0ff", glow:"rgba(170,80,255,.35)",  d1:"rgba(25,0,45,.92)",  d2:"rgba(60,10,110,.88)", d3:"rgba(110,30,180,.85)" },
+    yesil:   { a:"#3dff8b", bd:"#6dffa7", glow:"rgba(40,255,130,.3)",   d1:"rgba(0,30,15,.92)",  d2:"rgba(0,70,35,.88)",   d3:"rgba(0,120,60,.85)" },
+    altin:   { a:"#ffc13d", bd:"#ffd36b", glow:"rgba(255,190,50,.35)",  d1:"rgba(35,22,0,.92)",  d2:"rgba(85,55,0,.88)",   d3:"rgba(140,95,0,.85)" },
+    koyu:    { a:"#9aa4b2", bd:"#b8c0cc", glow:"rgba(150,160,180,.25)", d1:"rgba(8,10,14,.95)",  d2:"rgba(20,24,32,.92)",  d3:"rgba(34,40,52,.9)" }
+  };
 
-  const BEKLEME_SN = 120;   // iki gösterim arası (saniye)
-  const EKRANDA_SN = 15;    // ekranda kalma süresi (saniye)
-  const MESAJ_DEGISIM_SN = 5; // ekrandayken mesaj değişme süresi
-  // =====================
-
+  const FB = (window.FIREBASE_URL || "").replace(/\/$/, "");
   const $ = id => document.getElementById(id);
-  $("brand").innerHTML = SUNUCU_ADI_1 + "&nbsp;<span>" + SUNUCU_ADI_2 + "</span>";
-  $("invite").textContent = DAVET;
-  $("badge").textContent = ROZET;
 
-  let i = 0;
-  function yaz() {
-    const m = MESAJLAR[i % MESAJLAR.length];
-    i++;
-    $("title").textContent = m.baslik;
-    $("sub").textContent = m.alt;
+  let cur = { ...DEF };
+  let manual = false, autoPhase = false, flashPhase = false;
+  let msgIdx = 0, autoSig = "", autoTimers = [], rotTimer = null, lastFlash = null;
+
+  const visible = () => manual || autoPhase || flashPhase;
+  const render = () => $("band").classList.toggle("show", visible());
+
+  function paintStatic() {
+    $("brand").innerHTML = "";
+    $("brand").append(cur.brand1 + "\u00a0");
+    const sp = document.createElement("span");
+    sp.textContent = cur.brand2;
+    $("brand").append(sp);
+    $("invite").textContent = cur.invite;
+    $("badge").textContent = cur.badge;
+    const t = THEMES[cur.theme] || THEMES.pembe;
+    const r = document.documentElement.style;
+    r.setProperty("--a", t.a);   r.setProperty("--bd", t.bd);   r.setProperty("--glow", t.glow);
+    r.setProperty("--d1", t.d1); r.setProperty("--d2", t.d2);   r.setProperty("--d3", t.d3);
   }
 
-  function mesajDegistir() {
+  function setMsg(i) {
+    const m = cur.messages[i % cur.messages.length];
+    $("title").textContent = m.t;
+    $("sub").textContent = m.s || "";
+  }
+
+  function rotate() {
+    if (!visible() || cur.messages.length < 2) return;
     const t = $("texts");
     t.classList.add("out");
-    setTimeout(() => { yaz(); t.classList.remove("out"); }, 400);
+    setTimeout(() => { msgIdx++; setMsg(msgIdx); t.classList.remove("out"); }, 400);
+  }
+  function restartRot() {
+    clearInterval(rotTimer);
+    rotTimer = setInterval(rotate, Math.max(2, cur.rotateSec) * 1000);
   }
 
-  function goster() {
-    yaz();
-    $("band").classList.add("show");
-    const timer = setInterval(mesajDegistir, MESAJ_DEGISIM_SN * 1000);
+  function restartAuto() {
+    const sig = [cur.auto, cur.waitSec, cur.showSec].join();
+    if (sig === autoSig) return;
+    autoSig = sig;
+    autoTimers.forEach(clearTimeout); autoTimers = [];
+    autoPhase = false; render();
+    if (!cur.auto) return;
+    const cycle = () => {
+      autoPhase = true; render();
+      autoTimers.push(setTimeout(() => {
+        autoPhase = false; render();
+        autoTimers.push(setTimeout(cycle, cur.waitSec * 1000));
+      }, cur.showSec * 1000));
+    };
+    autoTimers.push(setTimeout(cycle, 3000));
+  }
+
+  function doFlash() {
+    flashPhase = true;
+    $("band").classList.add("flash");
+    render();
     setTimeout(() => {
-      $("band").classList.remove("show");
-      clearInterval(timer);
-    }, EKRANDA_SN * 1000);
+      flashPhase = false;
+      $("band").classList.remove("flash");
+      render();
+    }, 8000);
   }
 
-  setTimeout(goster, 3000);
-  setInterval(goster, (BEKLEME_SN + EKRANDA_SN) * 1000);
+  function apply(s) {
+    const old = cur;
+    cur = { ...DEF, ...(s || {}) };
+    let msgs = cur.messages;
+    if (msgs && !Array.isArray(msgs)) msgs = Object.values(msgs);
+    msgs = (msgs || []).filter(m => m && m.t);
+    cur.messages = msgs.length ? msgs : DEF.messages;
+    ["waitSec", "showSec", "rotateSec"].forEach(k => { cur[k] = Number(cur[k]) || DEF[k]; });
+
+    paintStatic();
+    manual = !!cur.show;
+    if (JSON.stringify(old.messages) !== JSON.stringify(cur.messages) || lastFlash === null) {
+      msgIdx = 0; setMsg(0);
+    }
+    restartRot();
+    restartAuto();
+    render();
+    if (lastFlash !== null && cur.flash && cur.flash !== lastFlash) doFlash();
+    lastFlash = cur.flash || 0;
+  }
+
+  async function load() {
+    try {
+      const r = await fetch(FB + "/altband.json", { cache: "no-store" });
+      apply(await r.json());
+    } catch (e) { /* bağlantı yoksa mevcut hâliyle devam */ }
+  }
+
+  if (FB) {
+    apply(null);
+    load();
+    try {
+      const es = new EventSource(FB + "/altband.json");
+      es.addEventListener("put", load);
+      es.addEventListener("patch", load);
+    } catch (e) {}
+    setInterval(load, 20000);
+  } else {
+    apply(null);   // Firebase yok: varsayılan ayarlarla kendi kendine çalışır
+  }
 </script>
 </body>
 </html>

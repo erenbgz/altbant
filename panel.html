@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No Limits Altband Paneli</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #0b0d14; color: #e6e8ef;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    padding: 20px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+  h1 { margin: 0; font-family: "Bungee", Impact, sans-serif; font-size: 26px; font-weight: 400; }
+  h1 span { color: #ff5fa2; }
+  .muted { color: #8b92a6; font-size: 13px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #151926; border: 1px solid #262c40; font-size: 13px; font-weight: 600; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
+  .dot.on { background: #35e07a; box-shadow: 0 0 8px #35e07a; }
+  .dot.live { background: #ff3b5c; box-shadow: 0 0 8px #ff3b5c; }
+
+  .warn { background: #3a1a22; border: 1px solid #ff4d6d; color: #ffd0d8; padding: 14px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .card { background: #111522; border: 1px solid #222840; border-radius: 14px; padding: 18px; }
+  .card h2 { margin: 0 0 14px; font-size: 14px; letter-spacing: .5px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  label { display: block; font-size: 12px; color: #8b92a6; margin: 12px 0 6px; font-weight: 600; }
+  input[type=text], textarea {
+    width: 100%; background: #0b0e19; border: 1px solid #262c40; border-radius: 10px;
+    color: #fff; padding: 10px 12px; font: inherit; font-size: 14px;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  input:focus, textarea:focus { outline: none; border-color: #ff5fa2; }
+
+  button {
+    font: inherit; cursor: pointer; border: 1px solid #262c40; background: #171c2e; color: #fff;
+    padding: 11px 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
+    transition: transform .08s, filter .15s;
+  }
+  button:hover { filter: brightness(1.2); }
+  button:active { transform: scale(.97); }
+  .b-show { background: #135c33; border-color: #1e8a4d; }
+  .b-hide { background: #62161f; border-color: #922332; }
+  .b-main { background: linear-gradient(135deg, #ff3d7f, #d4004f); border: none; }
+  .b-flash { background: #20141a; border-color: #ff5b7e; color: #ff9db1; }
+  .big { padding: 16px; font-size: 15px; }
+
+  #pv {
+    position: relative; width: 100%; overflow: hidden; border-radius: 10px; border: 1px solid #262c40;
+    background: repeating-conic-gradient(#1a1f33 0% 25%, #141829 0% 50%) 0 0 / 24px 24px;
+  }
+  #frame { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; background: transparent; }
+
+  .tpl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tpl button { text-align: left; background: #151a2c; }
+
+  .range-head { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 13px; font-weight: 600; }
+  .range-head b { color: #35e07a; font-size: 13px; }
+  input[type=range] { width: 100%; accent-color: #ff3d7f; margin-top: 8px; }
+
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+  .themes button { display: flex; align-items: center; gap: 8px; justify-content: center; background: #151a2c; }
+  .themes button.sel { border-color: #ff5fa2; box-shadow: 0 0 0 1px #ff5fa2 inset; }
+  .sw { width: 14px; height: 14px; border-radius: 50%; }
+  .check { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 14px; font-weight: 600; }
+  .check input { width: 18px; height: 18px; accent-color: #ff3d7f; }
+
+  .link { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; background: #0f1a2a; border-color: #1c3a5c; }
+  .link input { flex: 1; font-family: monospace; }
+  .link .b-copy { background: #0a84d6; border: none; white-space: nowrap; }
+  .link small { display: block; color: #7fb8e8; margin-bottom: 8px; font-weight: 700; font-size: 12px; letter-spacing: .5px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(80px);
+    background: #1d2438; border: 1px solid #35406a; padding: 12px 20px; border-radius: 10px; font-weight: 700;
+    transition: transform .3s; z-index: 10;
+  }
+  #toast.on { transform: translateX(-50%) translateY(0); }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>NO <span>LIMITS</span> PANEL</h1>
+      <div class="muted">Yayın altbandı kontrol masası</div>
+    </div>
+    <div class="pill"><span class="dot" id="cdot"></span><span id="ctext">Bağlanıyor...</span></div>
+  </header>
+
+  <div class="warn" id="warn" hidden>
+    <b>Firebase henüz ayarlanmamış.</b> Panelin bandı yönetebilmesi için <code>config.js</code> dosyasına Firebase Realtime Database adresini yazman gerekiyor.
+  </div>
+
+  <div class="card link">
+    <div style="flex:1">
+      <small>OBS'E EKLENECEK ŞEFFAF LİNK (1920×1080)</small>
+      <input type="text" id="olink" readonly>
+    </div>
+    <button class="b-copy" id="copy">Kopyala</button>
+  </div>
+
+  <div class="grid">
+    <div class="col">
+
+      <div class="card">
+        <h2>Yayın kontrolü
+          <span class="pill" style="padding:5px 12px"><span class="dot" id="sdot"></span><span id="stext">GİZLİ</span></span>
+        </h2>
+        <div class="muted" style="margin-bottom:12px">Butona bastığın anda OBS'teki bant animasyonla girer veya çıkar.</div>
+        <div class="row">
+          <button class="b-show big" id="bshow">BANDI GÖSTER</button>
+          <button class="b-hide big" id="bhide">BANDI GİZLE</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Canlı önizleme <button id="reload" style="padding:5px 10px;font-size:12px">Yenile</button></h2>
+        <div id="pv"><iframe id="frame" src="index.html"></iframe></div>
+        <div class="muted" style="margin-top:8px">OBS'te ne görünüyorsa burada da aynısı görünür.</div>
+      </div>
+
+      <div class="card">
+        <h2>Hızlı şablonlar</h2>
+        <div class="tpl" id="tpl"></div>
+      </div>
+
+    </div>
+
+    <div class="col">
+
+      <div class="card">
+        <h2>Mesajlar &amp; metinler</h2>
+        <label>Mesajlar (her satır bir mesaj: <code>Başlık | Alt yazı</code>)</label>
+        <textarea id="msgs"></textarea>
+        <div class="row">
+          <div><label>Sunucu adı (beyaz)</label><input type="text" id="b1"></div>
+          <div><label>Sunucu adı (renkli)</label><input type="text" id="b2"></div>
+        </div>
+        <div class="row">
+          <div><label>Etiket (KATIL, CANLI, MOLA...)</label><input type="text" id="badge"></div>
+          <div><label>Davet linki</label><input type="text" id="invite"></div>
+        </div>
+        <div class="row" style="margin-top:16px">
+          <button class="b-main big" id="apply">GÜNCELLE (Ctrl+Enter)</button>
+          <button class="b-flash big" id="flash">FLAŞ UYARI</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Süre, renk ve mod</h2>
+
+        <div class="range-head"><span>Mesaj değişme süresi</span><b id="rotv">5 sn</b></div>
+        <input type="range" id="rot" min="2" max="20" step="1" value="5">
+
+        <div class="range-head"><span>Otomatik modda ekranda kalma</span><b id="shv">15 sn</b></div>
+        <input type="range" id="sh" min="5" max="60" step="1" value="15">
+
+        <div class="range-head"><span>Otomatik modda bekleme</span><b id="waitv">120 sn</b></div>
+        <input type="range" id="wait" min="20" max="600" step="10" value="120">
+
+        <label class="check" style="margin-top:18px"><input type="checkbox" id="auto"> Bant belirli aralıkla kendiliğinden çıksın</label>
+
+        <label style="margin-top:18px">Renk teması</label>
+        <div class="themes" id="themes"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+  const FB = (window.FIREBASE_URL || "").replace(/\/$/, "");
+  const $ = id => document.getElementById(id);
+
+  const THEMES = {
+    pembe: ["Pembe", "#ff5fa2"], kirmizi: ["Kırmızı", "#ff4d4d"], mor: ["Mor", "#c77dff"],
+    yesil: ["Yeşil", "#3dff8b"], altin: ["Altın", "#ffc13d"], koyu: ["Koyu", "#9aa4b2"]
+  };
+  const TEMPLATES = {
+    "Yayın Başlangıcı": { badge: "CANLI",   msgs: "Yayın başladı!|Hoş geldin, sohbete katıl.\nNo Limits'e davetlisin!|Yeni insanlarla tanış, eğlenceye katıl." },
+    "Takipçi Hedefi":   { badge: "HEDEF",   msgs: "Takipçi hedefimize az kaldı!|Takip et, hedefe birlikte ulaşalım." },
+    "Çekiliş & Ödül":   { badge: "ÇEKİLİŞ", msgs: "Çekiliş başladı!|Katılmak için sohbete yazman yeterli." },
+    "Mola / BRB":       { badge: "MOLA",    msgs: "Kısa bir mola veriyoruz|Hemen döneceğiz, ayrılma!" }
+  };
+
+  let theme = "pembe", toastTimer;
+  function toast(t) {
+    const el = $("toast"); el.textContent = t; el.classList.add("on");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("on"), 2200);
+  }
+
+  async function patch(obj) {
+    if (!FB) { toast("Önce config.js içine Firebase adresini yaz"); return false; }
+    try {
+      const r = await fetch(FB + "/altband.json", { method: "PATCH", body: JSON.stringify(obj) });
+      if (!r.ok) throw new Error(r.status);
+      return true;
+    } catch (e) { toast("Hata: kaydedilemedi (Firebase kurallarını kontrol et)"); return false; }
+  }
+
+  function collect() {
+    const messages = $("msgs").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+      const [t, ...r] = l.split("|");
+      return { t: t.trim(), s: r.join("|").trim() };
+    }).filter(m => m.t);
+    return {
+      messages: messages.length ? messages : [{ t: "No Limits'e davetlisin!", s: "" }],
+      brand1: $("b1").value.trim() || "NO",
+      brand2: $("b2").value.trim() || "LIMITS",
+      badge: $("badge").value.trim() || "KATIL",
+      invite: $("invite").value.trim(),
+      rotateSec: +$("rot").value, showSec: +$("sh").value, waitSec: +$("wait").value,
+      auto: $("auto").checked, theme
+    };
+  }
+
+  function fill(s) {
+    s = s || {};
+    const msgs = Array.isArray(s.messages) ? s.messages : Object.values(s.messages || {});
+    $("msgs").value = (msgs.length ? msgs : [
+      { t: "No Limits'e davetlisin!", s: "Yeni insanlarla tanış, eğlenceye katıl." },
+      { t: "Sunucumuz seni bekliyor", s: "Davet linki sağ tarafta, hemen katıl." }
+    ]).map(m => m.t + (m.s ? " | " + m.s : "")).join("\n");
+    $("b1").value = s.brand1 || "NO";
+    $("b2").value = s.brand2 || "LIMITS";
+    $("badge").value = s.badge || "KATIL";
+    $("invite").value = s.invite || "discord.gg/nlroleplay";
+    $("rot").value = s.rotateSec || 5;
+    $("sh").value = s.showSec || 15;
+    $("wait").value = s.waitSec || 120;
+    $("auto").checked = s.auto !== false;
+    theme = s.theme || "pembe";
+    sliders(); paintThemes();
+  }
+
+  function sliders() {
+    $("rotv").textContent = $("rot").value + " sn";
+    $("shv").textContent = $("sh").value + " sn";
+    $("waitv").textContent = $("wait").value + " sn";
+  }
+
+  function paintThemes() {
+    const box = $("themes"); box.innerHTML = "";
+    Object.entries(THEMES).forEach(([k, [name, col]]) => {
+      const b = document.createElement("button");
+      b.className = k === theme ? "sel" : "";
+      b.innerHTML = '<span class="sw" style="background:' + col + '"></span>' + name;
+      b.onclick = async () => { theme = k; paintThemes(); if (await patch({ theme: k })) toast("Tema değişti ✓"); };
+      box.append(b);
+    });
+  }
+
+  function status(s) {
+    const on = !!(s && s.show);
+    $("sdot").className = "dot" + (on ? " live" : "");
+    $("stext").textContent = on ? "YAYINDA" : "GİZLİ";
+  }
+
+  let first = true;
+  async function load() {
+    try {
+      const r = await fetch(FB + "/altband.json", { cache: "no-store" });
+      const s = await r.json();
+      if (first) { fill(s); first = false; }
+      status(s);
+      $("cdot").className = "dot on"; $("ctext").textContent = "Firebase: Canlı Bağlı";
+    } catch (e) {
+      $("cdot").className = "dot"; $("ctext").textContent = "Bağlantı yok";
+    }
+  }
+
+  // ---- Olaylar ----
+  $("bshow").onclick = async () => { if (await patch({ show: true }))  toast("Bant yayında ✓"); };
+  $("bhide").onclick = async () => { if (await patch({ show: false })) toast("Bant gizlendi ✓"); };
+  $("apply").onclick = async () => { if (await patch(collect())) toast("Güncellendi ✓"); };
+  $("flash").onclick = async () => { if (await patch({ flash: Date.now() })) toast("Flaş uyarı gönderildi ✓"); };
+  $("auto").onchange = async () => { if (await patch({ auto: $("auto").checked })) toast("Mod değişti ✓"); };
+  [["rot", "rotateSec"], ["sh", "showSec"], ["wait", "waitSec"]].forEach(([id, key]) => {
+    $(id).oninput = sliders;
+    $(id).onchange = async () => { sliders(); if (await patch({ [key]: +$(id).value })) toast("Süre güncellendi ✓"); };
+  });
+  document.addEventListener("keydown", e => { if (e.ctrlKey && e.key === "Enter") $("apply").click(); });
+
+  $("copy").onclick = () => {
+    $("olink").select();
+    navigator.clipboard.writeText($("olink").value).then(() => toast("Link kopyalandı ✓"), () => document.execCommand("copy"));
+  };
+  $("reload").onclick = () => { $("frame").src = "index.html?t=" + Date.now(); };
+
+  Object.entries(TEMPLATES).forEach(([name, t]) => {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.onclick = async () => {
+      $("msgs").value = t.msgs.replace(/\|/g, " | ");
+      $("badge").value = t.badge;
+      if (await patch(collect())) toast(name + " uygulandı ✓");
+    };
+    $("tpl").append(b);
+  });
+
+  // Önizleme ölçekleme
+  function fit() {
+    const w = $("pv").clientWidth;
+    $("frame").style.transform = "scale(" + (w / 1920) + ")";
+    $("pv").style.height = (w * 9 / 16) + "px";
+  }
+  window.addEventListener("resize", fit); fit();
+
+  $("olink").value = new URL("index.html", location.href).href;
+
+  // ---- Başlangıç ----
+  paintThemes(); sliders();
+  if (!FB) {
+    $("warn").hidden = false;
+    $("ctext").textContent = "Firebase ayarlanmadı";
+    fill(null);
+  } else {
+    load();
+    try {
+      const es = new EventSource(FB + "/altband.json");
+      es.addEventListener("put", load);
+      es.addEventListener("patch", load);
+    } catch (e) {}
+    setInterval(load, 20000);
+  }
+</script>
+</body>
+</html>
