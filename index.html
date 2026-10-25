@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Sunucu Altband</title>
+<style>
+  html, body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
+
+  /* ===== Ana şerit ===== */
+  .band {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 120px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #fff;
+    transform: translateY(160%);
+    transition: transform .8s cubic-bezier(.2,.9,.3,1);
+  }
+  .band.show { transform: translateY(0); }
+
+  .bar {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(90deg, rgba(40,0,20,.92) 0%, rgba(90,0,45,.88) 55%, rgba(150,0,70,.85) 100%),
+      url("banner.png") center / cover no-repeat;
+    border-top: 3px solid rgba(255,120,175,.9);
+    box-shadow: 0 -8px 30px rgba(255,40,120,.35);
+  }
+  /* kayan parlama */
+  .bar::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -30%;
+    width: 22%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
+    transform: skewX(-20deg);
+  }
+  .band.show .bar::after { animation: shine 3.2s ease-in-out 1s infinite; }
+  @keyframes shine { 0% { left: -30%; } 60%, 100% { left: 130%; } }
+
+  /* ===== Logo (şeridin üstüne taşar) ===== */
+  .logo {
+    position: absolute;
+    left: 40px;
+    bottom: 14px;
+    width: 150px; height: 150px;
+    border-radius: 28px;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,.9);
+    box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 30px rgba(255,60,140,.55);
+    opacity: 0;
+    transform: scale(.4) rotate(-12deg);
+  }
+  .band.show .logo {
+    animation: logoIn .8s cubic-bezier(.2,1.4,.4,1) .5s forwards,
+               float 3.5s ease-in-out 1.4s infinite;
+  }
+  @keyframes logoIn { to { opacity: 1; transform: scale(1) rotate(0); } }
+  @keyframes float { 0%,100% { translate: 0 0; } 50% { translate: 0 -8px; } }
+
+  /* ===== Sunucu adı ===== */
+  .brand {
+    position: absolute;
+    left: 220px; top: 0; bottom: 0;
+    display: flex; align-items: center;
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 3px 14px rgba(0,0,0,.5);
+  }
+  .brand span { color: #ff5fa2; }
+
+  /* ===== Orta kısım ===== */
+  .middle {
+    position: absolute;
+    left: 640px; top: 0; bottom: 0;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .badge {
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.35);
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,95,162,.7); }
+    50%     { box-shadow: 0 0 0 10px rgba(255,95,162,0); }
+  }
+  .texts { transition: opacity .4s ease, transform .4s ease; }
+  .texts.out { opacity: 0; transform: translateY(10px); }
+  .title { font-size: 34px; font-weight: 700; }
+  .sub   { font-size: 21px; opacity: .8; margin-top: 4px; }
+
+  /* ===== Sağ: davet linki ===== */
+  .invite {
+    position: absolute;
+    right: 40px; top: 0; bottom: 0;
+    display: flex; align-items: center; gap: 18px;
+    font-size: 30px;
+    font-weight: 800;
+  }
+  .invite img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
+
+  /* ===== Parçaların sırayla gelmesi ===== */
+  .brand, .middle, .invite { opacity: 0; transform: translateX(-30px); }
+  .invite { transform: translateX(30px); }
+  .band.show .brand  { animation: in .6s ease .8s forwards; }
+  .band.show .middle { animation: in .6s ease 1.0s forwards; }
+  .band.show .invite { animation: in .6s ease 1.2s forwards; }
+  @keyframes in { to { opacity: 1; transform: translateX(0); } }
+</style>
+</head>
+<body>
+
+<div class="band" id="band">
+  <div class="bar"></div>
+  <img class="logo" src="logo.png" alt="">
+
+  <div class="brand" id="brand"></div>
+
+  <div class="middle">
+    <div class="badge" id="badge"></div>
+    <div class="texts" id="texts">
+      <div class="title" id="title"></div>
+      <div class="sub" id="sub"></div>
+    </div>
+  </div>
+
+  <div class="invite">
+    <span id="invite"></span>
+    <img src="logo.png" alt="">
+  </div>
+</div>
+
+<script>
+  // ====== AYARLAR ======
+  const SUNUCU_ADI_1 = "AŞK";        // beyaz kısım
+  const SUNUCU_ADI_2 = "ADASI";      // pembe kısım
+  const DAVET        = "discord.gg/seninlink";
+  const ROZET        = "KATIL";      // küçük etiket (YAKINDA, YENİ, AÇIK ...)
+
+  const MESAJLAR = [
+    { baslik: "Aşk Adası'na davetlisin!",   alt: "Yeni insanlarla tanış, eğlenceye katıl." },
+    { baslik: "Sunucumuz seni bekliyor",    alt: "Davet linki sağ tarafta, hemen katıl." },
+    { baslik: "Birlikte eğlenelim 🌴",      alt: "Etkinlikler, sohbet ve çok daha fazlası." },
+  ];
+
+  const BEKLEME_SN = 120;   // iki gösterim arası (saniye)
+  const EKRANDA_SN = 15;    // ekranda kalma süresi (saniye)
+  const MESAJ_DEGISIM_SN = 5; // ekrandayken mesaj değişme süresi
+  // =====================
+
+  const $ = id => document.getElementById(id);
+  $("brand").innerHTML = SUNUCU_ADI_1 + " <span>" + SUNUCU_ADI_2 + "</span>";
+  $("invite").textContent = DAVET;
+  $("badge").textContent = ROZET;
+
+  let i = 0;
+  function yaz() {
+    const m = MESAJLAR[i % MESAJLAR.length];
+    i++;
+    $("title").textContent = m.baslik;
+    $("sub").textContent = m.alt;
+  }
+
+  function mesajDegistir() {
+    const t = $("texts");
+    t.classList.add("out");
+    setTimeout(() => { yaz(); t.classList.remove("out"); }, 400);
+  }
+
+  function goster() {
+    yaz();
+    $("band").classList.add("show");
+    const timer = setInterval(mesajDegistir, MESAJ_DEGISIM_SN * 1000);
+    setTimeout(() => {
+      $("band").classList.remove("show");
+      clearInterval(timer);
+    }, EKRANDA_SN * 1000);
+  }
+
+  setTimeout(goster, 3000);
+  setInterval(goster, (BEKLEME_SN + EKRANDA_SN) * 1000);
+</script>
+</body>
+</html>
