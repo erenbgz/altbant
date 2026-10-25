@@ -167,7 +167,7 @@
         <input type="range" id="sh" min="5" max="60" step="1" value="15">
 
         <div class="range-head"><span>Otomatik modda bekleme</span><b id="waitv">120 sn</b></div>
-        <input type="range" id="wait" min="20" max="600" step="10" value="120">
+        <input type="range" id="wait" min="30" max="3600" step="30" value="120">
 
         <label class="check" style="margin-top:18px"><input type="checkbox" id="auto"> Bant belirli aralıkla kendiliğinden çıksın</label>
 
@@ -248,7 +248,8 @@
   function sliders() {
     $("rotv").textContent = $("rot").value + " sn";
     $("shv").textContent = $("sh").value + " sn";
-    $("waitv").textContent = $("wait").value + " sn";
+    const w = +$("wait").value, m = Math.floor(w / 60), r = w % 60;
+    $("waitv").textContent = w < 60 ? w + " sn" : m + " dk" + (r ? " " + r + " sn" : "");
   }
 
   function paintThemes() {
