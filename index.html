@@ -304,13 +304,22 @@
 
   if (FB) {
     apply(null);
-    load();
-    try {
-      const es = new EventSource(FB + "/altband.json");
-      es.addEventListener("put", load);
-      es.addEventListener("patch", load);
-    } catch (e) {}
-    setInterval(load, 20000);
+    const start = () => {
+      load();
+      try {
+        const es = new EventSource(FB + "/altband.json");
+        es.addEventListener("put", load);
+        es.addEventListener("patch", load);
+      } catch (e) {}
+      setInterval(load, 20000);
+    };
+    // Sayfa yenilenince (F5 / OBS açılışı) bant her zaman gizli başlasın.
+    // Panelin içindeki önizleme (iframe) buna dokunmaz.
+    if (window.self === window.top) {
+      fetch(FB + "/altband.json", { method: "PATCH", body: JSON.stringify({ show: false }) }).then(start, start);
+    } else {
+      start();
+    }
   } else {
     apply(null);   // Firebase yok: varsayılan ayarlarla kendi kendine çalışır
   }
