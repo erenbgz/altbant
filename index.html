@@ -193,6 +193,22 @@
   };
 
   const FB = (window.FIREBASE_URL || "").replace(/\/$/, "");
+  // Panelin içindeki önizleme mi (iframe), yoksa gerçek OBS sayfası mı?
+  const IS_PREVIEW = window.self !== window.top;
+
+  // OBS sayfası, bandın gerçekten ekranda olup olmadığını Firebase'e yazar.
+  // Önizleme kendi saatini çalıştırmaz, sadece bu bilgiyi gösterir.
+  let lastLive = null;
+  function reportLive(v) {
+    if (IS_PREVIEW || !FB || v === lastLive) return;
+    lastLive = v;
+    fetch(FB + "/altband.json", { method: "PATCH", body: JSON.stringify({ live: v }), keepalive: true }).catch(() => {});
+  }
+  if (!IS_PREVIEW) {
+    addEventListener("pagehide", () => {
+      if (FB) fetch(FB + "/altband.json", { method: "PATCH", body: JSON.stringify({ live: false }), keepalive: true }).catch(() => {});
+    });
+  }
   const $ = id => document.getElementById(id);
 
   let cur = { ...DEF };
@@ -202,6 +218,7 @@
   const visible = () => manual || autoPhase || flashPhase;
   let hideT;
   const render = () => {
+    reportLive(visible());
     const b = $("band");
     if (visible()) {
       clearTimeout(hideT);
@@ -252,7 +269,7 @@
     autoSig = sig;
     autoTimers.forEach(clearTimeout); autoTimers = [];
     autoPhase = false; render();
-    if (!cur.auto) return;
+    if (!cur.auto || IS_PREVIEW) return;
     const cycle = () => {
       autoPhase = true; render();
       autoTimers.push(setTimeout(() => {
@@ -284,14 +301,14 @@
     ["waitSec", "showSec", "rotateSec"].forEach(k => { cur[k] = Number(cur[k]) || DEF[k]; });
 
     paintStatic();
-    manual = !!cur.show;
+    manual = IS_PREVIEW ? !!cur.live : !!cur.show;
     if (JSON.stringify(old.messages) !== JSON.stringify(cur.messages) || lastFlash === null) {
       msgIdx = 0; setMsg(0);
     }
     restartRot();
     restartAuto();
     render();
-    if (lastFlash !== null && cur.flash && cur.flash !== lastFlash) doFlash();
+    if (!IS_PREVIEW && lastFlash !== null && cur.flash && cur.flash !== lastFlash) doFlash();
     lastFlash = cur.flash || 0;
   }
 
